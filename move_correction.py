@@ -14,12 +14,32 @@ def main():
             break
         frame = prepare_frame(frame)
         newframe = cv.absdiff(frame, fback)
-        for i in range(len(newframe)):
-            for j in range(len(newframe[i])):
-                if newframe[i][j] < 50:
-                    newframe[i][j] = 0
+        _, newframe = cv.threshold(newframe, 35, 255, cv.THRESH_TOZERO)
+
+        circles = cv.HoughCircles(newframe, cv.HOUGH_GRADIENT, 1, 1000,
+                               param1=100, param2=30,
+                               minRadius=1, maxRadius=250)
+        assert circles is not None
+
+        _, contours, _ = cv.findContours(np.copy(newframe), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
+        # for i in range(len(newframe)):
+        #     for j in range(len(newframe[i])):
+        #         if newframe[i][j] < 40:
+        #             newframe[i][j] = 0
 
         newframe = resize_frame_to_out(newframe)
+        newframe = cv.cvtColor(newframe, cv.COLOR_GRAY2BGR)
+        circles = np.uint16(np.around(circles))
+        for i in circles[0,:]:
+            # draw the outer circle
+            cv.circle(newframe,(i[0],i[1]),i[2],(0,255,0),2)
+            # draw the center of the circle
+            cv.circle(newframe,(i[0],i[1]),2,(0,0,255),3)
+        best_contour_i = 0
+        for i in range(len(contours)):
+            if len(contours[best_contour_i]) < len(contours[i]):
+                best_contour_i = i
+        cv.drawContours(newframe, contours, best_contour_i, (255, 0, 0))
         cv.imshow('frame', newframe)
         k = cv.waitKey(30) & 0xff
         if k == 27:
@@ -30,7 +50,7 @@ def main():
 
 
 def resize_frame_to_work(frame):
-    W_HEIGHT = 10
+    W_HEIGHT = 720
     W_WIDTH = W_HEIGHT * 16 // 9
     return cv.resize(frame, (W_WIDTH, W_HEIGHT), cv.INTER_AREA)
 
