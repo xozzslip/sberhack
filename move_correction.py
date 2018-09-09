@@ -39,27 +39,22 @@ def main():
         for i in range(len(contours)):
             if len(contours[main_contour_i]) < len(contours[i]):
                 main_contour_i = i
-        # cv.drawContours(newframe, contours, main_contour_i, (255, 0, 0))
 
         # find backbone subset
         backbone = []
         main_contour = contours[main_contour_i]
         top_pixel_i = 0
-        low_pixel_i = 0
         for i in range(len(main_contour)):
-            if main_contour[i][0][1] > main_contour[top_pixel_i][0][1]: # y coord
+            if main_contour[i][0][1] < main_contour[top_pixel_i][0][1]: # y coord
                 top_pixel_i = i
-        top_pixel = main_contour[top_pixel_i]
         
-        for pixel in main_contour:
-            if pixel[0][0] < top_pixel[0][0]: # on the left
-                backbone.append(pixel)
-        backbone = sorted(backbone, key=lambda x: x[0][1])[:len(backbone) // 3]
-        # print(len(backbone))
-        # print(len(main_contour))
-        cv.polylines(newframe, backbone, True, (255, 0, 0), thickness=5)
-            
+        backbone = main_contour[top_pixel_i:200]
+        cv.polylines(newframe, backbone, True, (0, 0, 255), thickness=3)
         out.write(newframe)
+        cv.imshow("newframe", newframe)
+        k = cv.waitKey(30) & 0xff
+        if k == 27:
+            break
 
     cap.release()
     cv.destroyAllWindows()
@@ -81,6 +76,10 @@ def prepare_frame(frame):
     frame = resize_frame_to_work(frame)
     frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
     return frame
+
+
+def draw_pixel(x, y):
+    cv.circle(newframe,(x, y),2,(0,0,255),3)
 
 
 if __name__ == '__main__':
