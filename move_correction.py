@@ -3,6 +3,8 @@ import cv2 as cv
 
 
 def main():
+    fourcc = cv.VideoWriter_fourcc(*'MJPG')
+    out = cv.VideoWriter('data/output.avia',fourcc, 20.0, (1280, 720))
     cap = cv.VideoCapture('data/background.mp4')
     _, fback = cap.read()
     fback = prepare_frame(fback)
@@ -22,10 +24,6 @@ def main():
         assert circles is not None
 
         _, contours, _ = cv.findContours(np.copy(newframe), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
-        # for i in range(len(newframe)):
-        #     for j in range(len(newframe[i])):
-        #         if newframe[i][j] < 40:
-        #             newframe[i][j] = 0
 
         newframe = resize_frame_to_out(newframe)
         newframe = cv.cvtColor(newframe, cv.COLOR_GRAY2BGR)
@@ -35,15 +33,20 @@ def main():
             cv.circle(newframe,(i[0],i[1]),i[2],(0,255,0),2)
             # draw the center of the circle
             cv.circle(newframe,(i[0],i[1]),2,(0,0,255),3)
-        best_contour_i = 0
+
+        # find largest contour
+        main_contour_i = 0
         for i in range(len(contours)):
-            if len(contours[best_contour_i]) < len(contours[i]):
-                best_contour_i = i
-        cv.drawContours(newframe, contours, best_contour_i, (255, 0, 0))
-        cv.imshow('frame', newframe)
-        k = cv.waitKey(30) & 0xff
-        if k == 27:
-            break
+            if len(contours[main_contour_i]) < len(contours[i]):
+                main_contour_i = i
+        cv.drawContours(newframe, contours, main_contour_i, (255, 0, 0))
+
+        # find backbone subset
+        backbone = []
+        main_contour = contours[main_contour_i]
+        for i in range(len(main_contour)):
+            pixel = main_contour[i][0]
+        out.write(newframe)
 
     cap.release()
     cv.destroyAllWindows()
